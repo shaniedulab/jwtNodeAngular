@@ -7,6 +7,7 @@ const bodyParser = require("body-parser");
 var jwt = require('jsonwebtoken');
 const cors=require('cors')
 const cookieparser = require('cookie-parser');
+const router=require('./test');
 
 
 app.use(cors({
@@ -14,6 +15,7 @@ app.use(cors({
 }));
 app.use(cookieparser())
 app.use(express.json());
+app.use(router)
 
 
 const sequelize = new Sequelize(
@@ -30,6 +32,7 @@ sequelize.authenticate().then(() => {
  }).catch((error) => {
     console.error('Unable to connect to the database: ', error);
  });
+
 const register=sequelize.define('register',{
     id:{
         type:DataTypes.INTEGER,
@@ -67,6 +70,41 @@ indexes:
   },
 ]
 });
+
+const todo=sequelize.define('todo',{
+    id:{
+        type:DataTypes.INTEGER,
+        primaryKey:true,
+        autoIncrement:true
+    },
+    todo:{
+        type:DataTypes.STRING,
+        allowNull:false
+    },
+    user_id:{
+        type:DataTypes.INTEGER,
+        allowNull:false
+    },
+},  {
+sequelize,
+tableName: 'todo',
+timestamps: true,
+createdAt: "created_at", // alias createdAt as created_at
+updatedAt: "updated_at",
+indexes: 
+[
+  {
+    name: "PRIMARY",
+    unique: true,
+    using: "BTREE",
+    fields: [
+      { name: "id" },
+    ]
+  },
+]
+});
+
+
  sequelize.sync().then(() => {
     console.log('Book table created successfully!');
  }).catch((error) => {
@@ -109,6 +147,7 @@ app.post('/postRegister', async (req, res) =>{
     }
     
 })
+
 app.post('/login', async (req, res) =>{
     console.log("body data is ==>",req.body)
     try{
@@ -116,12 +155,16 @@ app.post('/login', async (req, res) =>{
             where:{
                 email: req.body.email,
                 password: req.body.password }
-            })
+            })  
             if(!data){
                 res.json({
                     status:400,
                     message:'Unable to login'})
             }else{
+                    req.user =data.id
+                    console.log(req.user)
+                    const userID =req.user
+                    module.exports.userID =userID
             jwt.sign({data},"secretkey",{expiresIn:'2h'},(err ,token)=>{
                 if(token){
                     res.json({
@@ -167,13 +210,41 @@ app.post('/login', async (req, res) =>{
     // }
     
 })
+
+// app.post('/addTodo',async (req, res) =>{
+//     console.log("addtodo,re.body")
+//     console.log("addtodo,re.body",req.userId)
+
+//     try{
+//         const addtodo=await todo.create({
+//             todo:req.body.addtodo,
+//             user_id:req.userId
+//         })
+//         console.log(addtodo)
+//         if(addtodo){
+//             res.json({
+//                 status:200,
+//                 data:addtodo
+//             })
+//         }else{
+//             res.json({
+//                 status:400,
+//                 message:'todo not added successfully'
+//             })
+//         }
+//     }catch(error){
+//         console.log("error is /addTodo", error.message)
+//     }
+// })
+
+
 app.get('/welcome',verifyToken,(req,res)=>{
     jwt.verify(req.token,"secretkey",(err,token)=>{
         console.log(req.token)
         if(err){
             res.send("failed to access ")
         }else{
-             res.send("Welcome motherFucker")
+             res.send("Welcome")
         }
     })
     
@@ -188,7 +259,6 @@ function verifyToken(req, res, next) {
     } else {
       res.sendStatus(403);
     }
-  
   }
   
   
