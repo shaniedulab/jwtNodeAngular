@@ -10,17 +10,17 @@ router.get('/sendMail',(req,res)=>{
         secure:false,
         auth: {
             type: 'OAuth2',
-            user: 'zaynmalik111298@gmail.com',
-            pass: 'Pa$$W0rd9812',
-            clientId: '818686816195-20m0ipr08ck1omhedhis9v6menqs5vro.apps.googleusercontent.com',
-            clientSecret: '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',
-            refreshToken: '1//044w4SsADsnUoCgYIARAAGAQSNwF-L9Ir_IKlYgXOYPJK-KxD-oWPUfLCDljQGLrxKMD_JRfkmwLrjDQkq_ElUEi8JHDcfNTZl-A'
+            user: 'za878797979111298@gmail.com',
+            pass: '76767575776712',
+            clientId: '818686816195-20m0i9879798798pr08ck1omhedhis9v6menqs5vro.apps.googleusercontent.com',
+            clientSecret: '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DpVljufhuyIn',
+            refreshToken: '1//044w4SsADsnUoCgYIARAAGhjekrhgi87t954AQSNwF-L9Ir_IKlYgXOYPJK-KxD-oWPUfLCDljQGLrxKMD_JRfkmwLrjDQkq_ElUEi8JHDcfNTZl-A'
         }
       });
       
       var mailOptions = {
-        from: 'zaynmalik111298@gmail.com',
-        to: 'luqman@edulab.in',
+        from: 'zaynmauy8787611298@gmail.com',
+        to: '78687687687@edulab.in',
         subject: 'Sending Email using Node.js',
         text: 'That was easy!'
       };
