@@ -12,13 +12,19 @@ const cors = require('cors')
 const cookieparser = require('cookie-parser');
 const router = require('./test');
 const bcrypt = require('bcrypt');
+const router2=require('./program');
+const cookieParser = require('cookie-parser');
 
 app.use(cors({
     credentials: true,
 }));
+app.set('view engine', 'ejs');
 app.use(cookieparser())
 app.use(express.json());
 app.use(router)
+app.use(router2)
+app.use(cookieParser());
+
 
 
 const sequelize = new Sequelize(
@@ -26,9 +32,11 @@ const sequelize = new Sequelize(
     'root',
     '1234', {
         host: 'localhost',
-        dialect: 'mysql'
-    }
+        dialect: 'mysql',
+        logging: false,
+    },
 );
+
 sequelize.authenticate().then(() => {
     console.log('Connection has been established successfully.');
 }).catch((error) => {
@@ -85,17 +93,17 @@ const todo = sequelize.define('todo', {
         allowNull: false
     },
     image:{
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false
     },
     content:{
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false
     },
-    user_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
+    // user_id: {
+    //     type: DataTypes.INTEGER,
+    //     allowNull: false
+    // },
 }, {
     sequelize,
     tableName: 'todo',
@@ -168,6 +176,7 @@ app.post('/postRegister', async (req, res) => {
 })
 
 app.post('/login', async (req, res) => {
+
     try {
 
         const data = await register.findOne({
@@ -175,6 +184,7 @@ app.post('/login', async (req, res) => {
                 email: req.body.email,
             }
         })
+        const id=data.id
         if (!data) {
             res.json({
                 status: 400,
@@ -183,7 +193,7 @@ app.post('/login', async (req, res) => {
         } else {
             const result=await bcrypt.compare(req.body.password, data.password)
                if(result){
-                    jwt.sign({data}, "secretkey", {expiresIn: '2h'},(err, token) => {
+                    jwt.sign({id}, "secretkey", {expiresIn: '2h'},(err, token) => {
                         if (token) {
                             req.user = data.id
                             const userId = req.user
@@ -199,7 +209,13 @@ app.post('/login', async (req, res) => {
                                 message: 'Unauthorized'
                             })
                         }
+                  /* Creating a new token. */
                     })
+                    const refreshToken = jwt.sign({id}, "refreshsecretkey", { expiresIn: '1d' });
+                    console.log("refreshToken:",refreshToken)
+                    res.cookie('refjwt', refreshToken, { httpOnly: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000 });
+                    console.log(req.cookie)
+                    console.log(req.cookies)
                 }else{
                     res.json({
                         status: 401,
@@ -243,33 +259,17 @@ app.post('/login', async (req, res) => {
 })
 
 
-// app.get('/welcome',verifyToken,(req,res)=>{
-//     jwt.verify(req.token,"secretkey",(err,token)=>{
-//         console.log(req.token)
-//         if(err){
-//             res.send("failed to access ")
-//         }else{
-//              res.send("Welcome")
-//         }
-//     })
-
-// })
-// function verifyToken(req, res, next) {
-//     const bearerHeader = req.headers['authorization'];
-//     if(typeof bearerHeader !== 'undefined') {
-//       const bearer = bearerHeader.split(' ');
-//       const bearerToken = bearer[1];
-//       req.token = bearerToken;
-//       next();
-//     } else {
-//       res.sendStatus(403);
-//     }
-//   }
-
-
+app.get('/read-cookie', (req, res) => {
+    const myCookie = req.cookies['refjwt'];
+    console.log(myCookie)
+   res.json({
+    data:req.cookies['refjwt']
+   })
+  });
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
 })
 
 module.exports.todo = todo
+module.exports.register = register
