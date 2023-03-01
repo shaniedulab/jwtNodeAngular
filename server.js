@@ -176,7 +176,6 @@ app.post('/postRegister', async (req, res) => {
 })
 
 app.post('/login', async (req, res) => {
-
     try {
 
         const data = await register.findOne({
@@ -193,29 +192,22 @@ app.post('/login', async (req, res) => {
         } else {
             const result=await bcrypt.compare(req.body.password, data.password)
                if(result){
-                    jwt.sign({id}, "secretkey", {expiresIn: '2h'},(err, token) => {
-                        if (token) {
-                            req.user = data.id
-                            const userId = req.user
-                            console.log(userId)
-                            module.exports.userId = userId
-                            res.json({
-                                status: 200,
-                                data: token
-                            })
-                        } else {
-                            res.json({
-                                status: 401,
-                                message: 'Unauthorized'
-                            })
-                        }
-                  /* Creating a new token. */
-                    })
+                    req.user = data.id
+                    const userId = req.user
+                    console.log(userId)
+                    module.exports.userId = userId
+                    const accessToken = jwt.sign({id}, "secretkey", {expiresIn: '360000'})
                     const refreshToken = jwt.sign({id}, "refreshsecretkey", { expiresIn: '1d' });
+                        res.json({
+                            status: 200,
+                            data:accessToken,
+                            refreshToken: refreshToken
+                        })
                     console.log("refreshToken:",refreshToken)
-                    res.cookie('refjwt', refreshToken, { httpOnly: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000 });
-                    console.log(req.cookie)
-                    console.log(req.cookies)
+                    
+                    // res.cookie('refjwt', refreshToken, { httpOnly: true, sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000 });
+                    // console.log(req.cookie)
+                    // console.log(req.cookies)
                 }else{
                     res.json({
                         status: 401,
@@ -228,44 +220,27 @@ app.post('/login', async (req, res) => {
     } catch (err) {
         console.log('Unable to Login', err.message)
     }
-
-    // try{
-    //     const loginData=await register.findOne({
-    //         where:{
-    //             email:req.body.email,
-    //             password: req.body.password 
-    //         }})
-    //         if(loginData){
-    //             const accessToken=jwt.sign({loginData},"accessSecretkey",{expiresIn:'3m'});
-    //             const reffreshToken=jwt.sign({loginData},"refreshSecretkey",{expiresIn:'1d'});
-    //             res.cookie('jwt',reffreshToken,{ httpOnly: true, 
-    //                 sameSite: 'None', secure: true, 
-    //                 maxAge: 24 * 60 * 60 * 1000 })
-
-    //              res.json({
-    //                     status:200,
-    //                     data:accessToken,
-    //                     cookie:reffreshToken
-    //                 })
-
-    //         }else{
-    //             res.json({'stasus':406,
-    //             message: 'Invalid credentials' });
-    //         }
-    // }catch(error){
-    //     console.log("error is /login", error.message)
-    // }
-
 })
 
-
-app.get('/read-cookie', (req, res) => {
-    const myCookie = req.cookies['refjwt'];
-    console.log(myCookie)
-   res.json({
-    data:req.cookies['refjwt']
-   })
-  });
+app.post('/refreshToken', (req, res) => {
+    if (req.body.refreshToken) {
+        const refreshToken = req.body.refreshToken;
+        jwt.verify(refreshToken, "refreshsecretkey", 
+        (err, decoded) => {
+            console.log(decoded.userId)
+            const id=decoded.userId
+            if (err) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+            else {
+                const accessToken = jwt.sign({id}, "secretkey", {expiresIn: '360000'});
+                return res.json({ data:accessToken });
+            }
+        })
+    } else {
+        return res.status(404).json({ message: 'Token not found' });
+    }
+})
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)

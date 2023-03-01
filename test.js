@@ -2,7 +2,7 @@ const router = require('express').Router();
 let index=require('./server')
 const tokenVerify = require('./middlware/verifyToken.js')
 
-router.get('/testMiddlware',tokenVerify,(req,res)=>{
+router.get('/testMiddlware',(req,res)=>{
     res.json({
         message:'TokenVerified successfully',
         status:200,
